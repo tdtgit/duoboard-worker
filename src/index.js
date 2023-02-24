@@ -18,25 +18,25 @@ const fetchJSON = async (url) => {
 	return response.json();
 };
 
-// Frozen time: return true if current time is 9pm Sunday to 10am of Monday
 const isWeekend = () => {
-	const today = new Date(
-		new Date().toLocaleString('en-US', { timeZone: request.cf.timezone })
+	const now = new Date(
+		new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" })
 	);
-	const day = today.getDay();
-	const hour = today.getHours();
-	return (day === 0 && hour >= 21) || (day === 1 && hour < 10);
+	const dayOfWeek = now.getDay();
+	const hour = now.getHours();
+
+	return (dayOfWeek >= 6 && hour >= 9 || dayOfWeek == 1 && hour < 10);
 };
 
 const fetchUserInfo = async (member) => {
 	const url = `https://www.duolingo.com/2017-06-30/users?username=${member}`;
+	console.log(url);
 	return fetchJSON(url);
 };
 
-const fetchUserPoints = async (member, request) => {
-	// Set timezone to the client's timezone.
+const fetchUserPoints = async (member) => {
 	const endDate = new Date(
-		new Date().toLocaleString('en-US', { timeZone: request.cf.timezone })
+		new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" })
 	)
 	if (isWeekend()) {
 		endDate.setDate(endDate.getDate() - 1);
@@ -44,15 +44,17 @@ const fetchUserPoints = async (member, request) => {
 		endDate.setDate(endDate.getDate());
 	}
 	const startDate = new Date(
-		new Date().toLocaleString('en-US', { timeZone: request.cf.timezone })
+		new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" })
 	)
 	startDate.setDate(startDate.getDate() - 6);
 	const url = `https://www.duolingo.com/2017-06-30/users/${member}/xp_summaries?startDate=${startDate.toISOString().split('T')[0]}&endDate=${endDate.toISOString().split('T')[0]}`;
+	console.log(url);
 	return fetchJSON(url);
 };
 
 export default {
 	async fetch(request, env, ctx) {
+		console.log(isWeekend())
 		let respHeaders = {
 			"Access-Control-Allow-Origin": env.FRONTEND_URL,
 			"Access-Control-Allow-Methods": "GET,HEAD,OPTIONS",
@@ -72,7 +74,7 @@ export default {
 			if (!memberUsername) {
 				return new Response('No member specified');
 			}
-			const points = await fetchUserPoints(memberUsername, request);
+			const points = await fetchUserPoints(memberUsername);
 			return new Response(JSON.stringify(points), { headers: respHeaders });
 		} else {
 			console.log(lastSegment);
