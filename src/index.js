@@ -21,7 +21,7 @@ const fetchUserPoints = async (member) => {
 	let isReportingTime = (dayOfWeek === 1 && hour >= 0 && hour < 10);
 
 	let startDate = new Date(new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" }));
-	startDate.setDate(startDate.getDate() - (startDate.getDay() - 1));
+	startDate.setDate(startDate.getDate() - (startDate.getDay() || 7) + 1);
 
 	let endDate = new Date(
 		new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" })
@@ -41,9 +41,8 @@ const fetchUserPoints = async (member) => {
 
 export default {
 	async fetch(request, env, ctx) {
-
 		let respHeaders = {
-			"Access-Control-Allow-Origin": "*",
+			"Access-Control-Allow-Origin": env.FRONTEND_URL,
 			"Access-Control-Allow-Methods": "GET,HEAD,OPTIONS",
 			"Access-Control-Max-Age": "86400",
 			"Access-Control-Allow-Headers": request.headers.get("Access-Control-Request-Headers"),
