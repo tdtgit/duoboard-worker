@@ -8,16 +8,23 @@ const fetchJSON = async (url) => {
 	return response.json();
 };
 
-const fetchUserInfo = async (member) => {
-	const url = `https://www.duolingo.com/2017-06-30/users?username=${member}`;
-	return fetchJSON(url);
+const fetchUserInfo = async (member, env) => {
+	const memberInfo = await env.MEMBERS.get(member);
+	if (memberInfo) {
+		console.log(`Found ${member} in cache`)
+		return JSON.parse(memberInfo);
+	}
+	console.log(`Fetching ${member} from API`)
+	const data = await fetchJSON(`https://www.duolingo.com/2017-06-30/users?username=${member}`);
+	env.MEMBERS.put(member, JSON.stringify(data), { expirationTtl: 86400 });
+	return data;
 };
 
 const fetchUserPoints = async (member) => {
 	let now = new Date(new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" }));
 	let dayOfWeek = now.getDay();
 	let hour = now.getHours();
-	let isFreezeTime = (dayOfWeek >= 6);
+	let isFreezeTime = (dayOfWeek >= 6 || dayOfWeek === 0);
 	let isReportingTime = (dayOfWeek === 1 && hour >= 0 && hour < 10);
 
 	let startDate = new Date(new Date().toLocaleString('en-US', { timeZone: "Asia/Ho_Chi_Minh" }));
@@ -64,7 +71,7 @@ export default {
 			return new Response(JSON.stringify(points), { headers: respHeaders });
 		} else {
 			const memberUsername = lastSegment;
-			const member = await fetchUserInfo(memberUsername);
+			const member = await fetchUserInfo(memberUsername, env);
 			return new Response(JSON.stringify(member), { headers: respHeaders });
 		}
 	},
